@@ -126,7 +126,7 @@ export default function Generator() {
             value={concept}
             onChange={(e) => setConcept(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-            className="relative bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent transition-all"
+            className="relative bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent transition-all text-base md:text-sm"
             />
         </div>
         <Button onClick={handleGenerate} disabled={isLoading} variant="outline" className="bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 shadow-sm transition-all">
