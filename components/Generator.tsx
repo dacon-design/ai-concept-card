@@ -35,6 +35,7 @@ export default function Generator() {
       });
       const result = await res.json();
       setData(result);
+      setConcept(""); // Clear input after successful generation
     } catch (error) {
       console.error(error);
       alert("生成失败，请检查网络或 API Key 设置。详情请查看控制台日志。");
@@ -105,7 +106,8 @@ export default function Generator() {
         
         const url = canvas.toDataURL("image/png");
         const link = document.createElement("a");
-        link.download = `${concept.replace(/\s+/g, "-")}-card.png`;
+        const fileName = data?.title || "concept";
+        link.download = `${fileName.replace(/\s+/g, "-")}-card.png`;
         link.href = url;
         link.click();
     } catch (err) {
@@ -280,7 +282,7 @@ export default function Generator() {
              </div>
           </div>
 
-          <Button variant="secondary" onClick={handleDownload} className="w-full max-w-[375px] shadow-sm">
+          <Button variant="outline" onClick={handleDownload} className="w-full max-w-[375px] shadow-sm bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all">
             <Download className="mr-2 h-4 w-4" /> 下载卡片
           </Button>
         </div>
