@@ -70,23 +70,21 @@ export async function POST(req: Request) {
     
     try {
       console.log("Generating image with Zhipu AI (CogView)...");
-      const zhipuResponse = await fetch("https://open.bigmodel.cn/api/paas/v4/images/generations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.ZHIPU_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "cogview-3",
-          prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`,
-        })
+      
+      const zhipu = new OpenAI({
+        apiKey: process.env.ZHIPU_API_KEY,
+        baseURL: "https://open.bigmodel.cn/api/paas/v4/"
       });
 
-      const zhipuData = await zhipuResponse.json();
+      const response = await zhipu.images.generate({
+        model: "cogview-3",
+        prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`,
+      });
       
-      if (zhipuData.data?.[0]?.url) {
+      if (response.data?.[0]?.url) {
         console.log("Zhipu image generation successful");
-        const tempUrl = zhipuData.data[0].url;
+        const tempUrl = response.data[0].url;
+
         
         // Proxy the image: Download and convert to Base64 to avoid CORS issues in frontend (html2canvas)
         try {
@@ -103,7 +101,7 @@ export async function POST(req: Request) {
             imageUrl = tempUrl;
         }
       } else {
-        console.error("Zhipu image generation failed:", JSON.stringify(zhipuData));
+        console.error("Zhipu image generation failed:", JSON.stringify(response));
       }
     } catch (imgError: any) {
       console.error("Image generation failed:", imgError.message);
