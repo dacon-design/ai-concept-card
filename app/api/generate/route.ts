@@ -76,17 +76,23 @@ export async function POST(req: Request) {
       });
       
       const zhipuResponse: any = await zhipuClient.createImages({
-          model: "cogview-3",
+          model: "cogview-3-flash",
           prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`
       });
 
-      console.log("Zhipu image generation successful");
+      console.log("Zhipu image generation successful", JSON.stringify(zhipuResponse));
       
       // Check the response structure based on the SDK
       const zhipuData = zhipuResponse.data || zhipuResponse; 
       
-      // Depending on SDK version, it might be in .data array or direct
-      const generatedUrl = Array.isArray(zhipuData) ? zhipuData[0]?.url : zhipuData?.data?.[0]?.url;
+      let generatedUrl;
+      const firstItem = Array.isArray(zhipuData) ? zhipuData[0] : zhipuData?.data?.[0];
+
+      if (typeof firstItem === 'string') {
+          generatedUrl = firstItem;
+      } else if (typeof firstItem === 'object' && firstItem?.url) {
+          generatedUrl = firstItem.url;
+      }
 
       if (generatedUrl) {
         // Proxy the image: Download and convert to Base64 to avoid CORS issues in frontend (html2canvas)
