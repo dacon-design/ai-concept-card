@@ -40,81 +40,103 @@ export async function POST(req: Request) {
       console.error("API Key is missing!");
     }
 
-    console.log("Generating text for concept:", concept);
-    // 1. Generate text explanation
-    const textCompletion = await openai.chat.completions.create({
+    console.log("Generating text and image prompt in parallel for concept:", concept);
+    
+    // 1. Define the text generation task
+    const textGenerationPromise = openai.chat.completions.create({
       model: llmModel,
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that explains concepts clearly and concisely. You MUST return a valid JSON object. Do not include markdown formatting (like ```json). The JSON object must have these keys: title (keep original language), subtitle (English translation), description (around 300 words in Chinese, explaining the concept in depth with examples, significance, and poetic language), and imagePrompt (a detailed English description for DALL-E to generate a minimal, abstract, or symbolic image representing this concept)."
+          content: "You are a helpful assistant that explains concepts clearly and concisely. You MUST return a valid JSON object. Do not include markdown formatting (like ```json). The JSON object must have these keys: title (keep original language), subtitle (English translation), description (MUST BE in Simplified Chinese, around 200 words, explaining the concept deeply, focusing on its core essence, significance, and philosophical depth. Use poetic, elegant, and direct language)."
         },
         {
           role: "user",
           content: `Explain the concept: "${concept}"`
         }
       ],
+    }).then(completion => {
+      let content = completion.choices[0].message.content || "{}";
+      content = content.replace(/```json\n?|\n?```/g, "").trim();
+      return JSON.parse(content);
     });
 
-    console.log("Text generation successful");
-    let content = textCompletion.choices[0].message.content || "{}";
-    // Clean up markdown formatting if present
-    content = content.replace(/```json\n?|\n?```/g, "").trim();
-    
-    console.log("Parsed content:", content);
-    const textResponse = JSON.parse(content);
-
-    console.log("Generating image with prompt:", textResponse.imagePrompt);
-    // 2. Generate image
-    let imageUrl = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3"; // Fallback image
-    
-    try {
-      console.log("Generating image with Zhipu AI (CogView)...");
-      
-      const zhipuClient = new ZhipuAI({
-        apiKey: process.env.ZHIPU_API_KEY
-      });
-      
-      const zhipuResponse: any = await zhipuClient.createImages({
-          model: "cogview-3-flash",
-          prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`
-      });
-
-      console.log("Zhipu image generation successful", JSON.stringify(zhipuResponse));
-      
-      // Check the response structure based on the SDK
-      const zhipuData = zhipuResponse.data || zhipuResponse; 
-      
-      let generatedUrl;
-      const firstItem = Array.isArray(zhipuData) ? zhipuData[0] : zhipuData?.data?.[0];
-
-      if (typeof firstItem === 'string') {
-          generatedUrl = firstItem;
-      } else if (typeof firstItem === 'object' && firstItem?.url) {
-          generatedUrl = firstItem.url;
-      }
-
-      if (generatedUrl) {
-        // Proxy the image: Download and convert to Base64 to avoid CORS issues in frontend (html2canvas)
-        try {
-            console.log("Fetching image to convert to base64...");
-            const imgRes = await fetch(generatedUrl);
-            if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
-            const imgBuffer = await imgRes.arrayBuffer();
-            const base64Image = Buffer.from(imgBuffer).toString('base64');
-            imageUrl = `data:image/png;base64,${base64Image}`;
-            console.log("Image converted to base64 successfully");
-        } catch (fetchErr) {
-            console.error("Failed to proxy image:", fetchErr);
-            // Fallback to original URL if proxy fails (though this might cause CORS issues)
-            imageUrl = generatedUrl;
+    // 2. Define the image prompt generation task
+    const imagePromptPromise = openai.chat.completions.create({
+      model: llmModel,
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert prompt engineer. Generate a detailed English description for an AI image generator to create a minimal, abstract, or symbolic image representing the user's concept. The style should be high-end, artistic, and suitable for a concept card background. Return ONLY the prompt string, nothing else."
+        },
+        {
+          role: "user",
+          content: `Concept: "${concept}"`
         }
-      } else {
-        console.error("Zhipu image generation failed: No URL in response", JSON.stringify(zhipuResponse));
-      }
-    } catch (imgError: any) {
-      console.error("Image generation failed:", imgError.message || imgError);
-    }
+      ],
+    }).then(completion => completion.choices[0].message.content || `A minimal, abstract representation of ${concept}`);
+
+    // 3. Start image generation as soon as the prompt is ready
+    const imageGenerationPromise = imagePromptPromise.then(async (imagePrompt) => {
+        console.log("Image prompt generated:", imagePrompt);
+        let finalImageUrl = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3"; // Fallback
+
+        try {
+            console.log("Generating image with Zhipu AI (CogView-3-Flash)...");
+            const zhipuKey = process.env.ZHIPU_API_KEY;
+            if (!zhipuKey) {
+                console.error("ZHIPU_API_KEY is missing in process.env");
+                throw new Error("ZHIPU_API_KEY is missing");
+            }
+            
+            const zhipuClient = new ZhipuAI({
+                apiKey: zhipuKey
+            });
+            
+            const zhipuResponse: any = await zhipuClient.createImages({
+                model: "cogview-3-flash",
+                prompt: imagePrompt,
+            });
+            
+            console.log("Zhipu image generation successful", JSON.stringify(zhipuResponse));
+            
+            const zhipuData = zhipuResponse.data || zhipuResponse; 
+            let generatedUrl;
+            const firstItem = Array.isArray(zhipuData) ? zhipuData[0] : zhipuData?.data?.[0];
+
+            if (typeof firstItem === 'string') {
+                generatedUrl = firstItem;
+            } else if (typeof firstItem === 'object' && firstItem?.url) {
+                generatedUrl = firstItem.url;
+            }
+
+            if (generatedUrl) {
+                // Proxy the image
+                try {
+                    console.log("Fetching image to convert to base64...");
+                    const imgRes = await fetch(generatedUrl);
+                    if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
+                    const imgBuffer = await imgRes.arrayBuffer();
+                    const base64Image = Buffer.from(imgBuffer).toString('base64');
+                    finalImageUrl = `data:image/png;base64,${base64Image}`;
+                    console.log("Image converted to base64 successfully");
+                } catch (fetchErr) {
+                    console.error("Failed to proxy image:", fetchErr);
+                    finalImageUrl = generatedUrl;
+                }
+            } else {
+                console.error("Zhipu image generation failed: No URL in response", JSON.stringify(zhipuResponse));
+            }
+        } catch (imgError: any) {
+            console.error("Image generation failed:", imgError.message || imgError);
+        }
+        return finalImageUrl;
+    });
+
+    // 4. Wait for both text and image generation to complete
+    const [textResponse, imageUrl] = await Promise.all([textGenerationPromise, imageGenerationPromise]);
+
+    console.log("All generation tasks completed");
 
     return NextResponse.json({
       title: textResponse.title || concept,
