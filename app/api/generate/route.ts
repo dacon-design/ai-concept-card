@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { ZhipuAI } from 'zhipuai-sdk-nodejs-v4';
 
 export async function POST(req: Request) {
   const { concept } = await req.json();
@@ -31,7 +32,6 @@ export async function POST(req: Request) {
     });
 
     const llmModel = process.env.LLM_MODEL || "gpt-3.5-turbo";
-    const imageModel = process.env.IMAGE_MODEL || "dall-e-3";
 
     // Log masked API key for debugging
     if (apiKey) {
@@ -68,53 +68,31 @@ export async function POST(req: Request) {
     // 2. Generate image
     let imageUrl = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3"; // Fallback image
     
-    // Generate JWT for Zhipu AI
-    // Zhipu AI requires a specific JWT format for the Authorization header
-    // The format is: Authorization: Bearer <token>
-    // The token is generated using the API Key (id.secret)
-    const generateZhipuToken = (apiKey: string) => {
-      const [id, secret] = apiKey.split(".");
-      if (!id || !secret) return apiKey; // Return original if not in id.secret format
-
-      // Simple JWT generation without external library dependency if possible
-      // But since we are in Node.js environment, we might need a library or a manual implementation
-      // For simplicity and reliability, let's try to use the raw API key first as some endpoints support it
-      // If that fails, we might need to add jsonwebtoken dependency
-      return apiKey;
-    };
-
     try {
       console.log("Generating image with Zhipu AI (CogView)...");
       
-      const token = generateZhipuToken(process.env.ZHIPU_API_KEY || "");
+      const zhipuClient = new ZhipuAI({
+        apiKey: process.env.ZHIPU_API_KEY
+      });
       
-      const zhipuResponse = await fetch("https://open.bigmodel.cn/api/paas/v4/images/generations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.ZHIPU_API_KEY}`
-        },
-        body: JSON.stringify({
+      const zhipuResponse: any = await zhipuClient.createImages({
           model: "cogview-3",
-          prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`,
-        })
+          prompt: textResponse.imagePrompt || `A minimal, abstract representation of ${concept}`
       });
 
-      if (!zhipuResponse.ok) {
-        const errorText = await zhipuResponse.text();
-        throw new Error(`Zhipu API Error: ${zhipuResponse.status} - ${errorText}`);
-      }
-
-      const zhipuData = await zhipuResponse.json();
       console.log("Zhipu image generation successful");
       
-      if (zhipuData.data?.[0]?.url) {
-        const tempUrl = zhipuData.data[0].url;
-        
+      // Check the response structure based on the SDK
+      const zhipuData = zhipuResponse.data || zhipuResponse; 
+      
+      // Depending on SDK version, it might be in .data array or direct
+      const generatedUrl = Array.isArray(zhipuData) ? zhipuData[0]?.url : zhipuData?.data?.[0]?.url;
+
+      if (generatedUrl) {
         // Proxy the image: Download and convert to Base64 to avoid CORS issues in frontend (html2canvas)
         try {
             console.log("Fetching image to convert to base64...");
-            const imgRes = await fetch(tempUrl);
+            const imgRes = await fetch(generatedUrl);
             if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
             const imgBuffer = await imgRes.arrayBuffer();
             const base64Image = Buffer.from(imgBuffer).toString('base64');
@@ -123,13 +101,13 @@ export async function POST(req: Request) {
         } catch (fetchErr) {
             console.error("Failed to proxy image:", fetchErr);
             // Fallback to original URL if proxy fails (though this might cause CORS issues)
-            imageUrl = tempUrl;
+            imageUrl = generatedUrl;
         }
       } else {
-        console.error("Zhipu image generation failed: No URL in response");
+        console.error("Zhipu image generation failed: No URL in response", JSON.stringify(zhipuResponse));
       }
     } catch (imgError: any) {
-      console.error("Image generation failed:", imgError.message);
+      console.error("Image generation failed:", imgError.message || imgError);
     }
 
     return NextResponse.json({
