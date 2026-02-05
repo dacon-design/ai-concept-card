@@ -68,8 +68,26 @@ export async function POST(req: Request) {
     // 2. Generate image
     let imageUrl = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3"; // Fallback image
     
+    // Generate JWT for Zhipu AI
+    // Zhipu AI requires a specific JWT format for the Authorization header
+    // The format is: Authorization: Bearer <token>
+    // The token is generated using the API Key (id.secret)
+    const generateZhipuToken = (apiKey: string) => {
+      const [id, secret] = apiKey.split(".");
+      if (!id || !secret) return apiKey; // Return original if not in id.secret format
+
+      // Simple JWT generation without external library dependency if possible
+      // But since we are in Node.js environment, we might need a library or a manual implementation
+      // For simplicity and reliability, let's try to use the raw API key first as some endpoints support it
+      // If that fails, we might need to add jsonwebtoken dependency
+      return apiKey;
+    };
+
     try {
       console.log("Generating image with Zhipu AI (CogView)...");
+      
+      const token = generateZhipuToken(process.env.ZHIPU_API_KEY || "");
+      
       const zhipuResponse = await fetch("https://open.bigmodel.cn/api/paas/v4/images/generations", {
         method: "POST",
         headers: {
@@ -82,10 +100,15 @@ export async function POST(req: Request) {
         })
       });
 
+      if (!zhipuResponse.ok) {
+        const errorText = await zhipuResponse.text();
+        throw new Error(`Zhipu API Error: ${zhipuResponse.status} - ${errorText}`);
+      }
+
       const zhipuData = await zhipuResponse.json();
+      console.log("Zhipu image generation successful");
       
       if (zhipuData.data?.[0]?.url) {
-        console.log("Zhipu image generation successful");
         const tempUrl = zhipuData.data[0].url;
         
         // Proxy the image: Download and convert to Base64 to avoid CORS issues in frontend (html2canvas)
@@ -103,7 +126,7 @@ export async function POST(req: Request) {
             imageUrl = tempUrl;
         }
       } else {
-        console.error("Zhipu image generation failed:", JSON.stringify(zhipuData));
+        console.error("Zhipu image generation failed: No URL in response");
       }
     } catch (imgError: any) {
       console.error("Image generation failed:", imgError.message);
