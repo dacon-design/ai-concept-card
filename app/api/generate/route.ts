@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { ZhipuAI } from 'zhipuai-sdk-nodejs-v4';
 
 export async function POST(req: Request) {
   const { concept } = await req.json();
@@ -83,38 +82,25 @@ export async function POST(req: Request) {
 
         try {
             console.log("Generating image with Zhipu AI (CogView-3-Flash)...");
-            const zhipuKey = process.env.ZHIPU_API_KEY;
-            if (!zhipuKey) {
-                console.error("ZHIPU_API_KEY is missing in process.env");
-                throw new Error("ZHIPU_API_KEY is missing");
-            }
             
-            const zhipuClient = new ZhipuAI({
-                apiKey: zhipuKey
+            const zhipu = new OpenAI({
+                apiKey: process.env.ZHIPU_API_KEY,
+                baseURL: "https://open.bigmodel.cn/api/paas/v4/"
             });
-            
-            const zhipuResponse: any = await zhipuClient.createImages({
+
+            const response = await zhipu.images.generate({
                 model: "cogview-3-flash",
                 prompt: imagePrompt,
             });
             
-            console.log("Zhipu image generation successful", JSON.stringify(zhipuResponse));
-            
-            const zhipuData = zhipuResponse.data || zhipuResponse; 
-            let generatedUrl;
-            const firstItem = Array.isArray(zhipuData) ? zhipuData[0] : zhipuData?.data?.[0];
+            if (response.data?.[0]?.url) {
+                console.log("Zhipu image generation successful");
+                const tempUrl = response.data[0].url;
 
-            if (typeof firstItem === 'string') {
-                generatedUrl = firstItem;
-            } else if (typeof firstItem === 'object' && firstItem?.url) {
-                generatedUrl = firstItem.url;
-            }
-
-            if (generatedUrl) {
                 // Proxy the image
                 try {
                     console.log("Fetching image to convert to base64...");
-                    const imgRes = await fetch(generatedUrl);
+                    const imgRes = await fetch(tempUrl);
                     if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
                     const imgBuffer = await imgRes.arrayBuffer();
                     const base64Image = Buffer.from(imgBuffer).toString('base64');
@@ -122,13 +108,13 @@ export async function POST(req: Request) {
                     console.log("Image converted to base64 successfully");
                 } catch (fetchErr) {
                     console.error("Failed to proxy image:", fetchErr);
-                    finalImageUrl = generatedUrl;
+                    finalImageUrl = tempUrl;
                 }
             } else {
-                console.error("Zhipu image generation failed: No URL in response", JSON.stringify(zhipuResponse));
+                console.error("Zhipu image generation failed:", JSON.stringify(response));
             }
         } catch (imgError: any) {
-            console.error("Image generation failed:", imgError.message || imgError);
+            console.error("Image generation failed:", imgError.message);
         }
         return finalImageUrl;
     });
