@@ -58,7 +58,7 @@ export default function Generator() {
             // Calculate 40% of the standard card height (375 * 16 / 9 = 666.66)
             // 666.66 * 0.4 = 266.66px
             imageSection.classList.remove('h-[40%]');
-            imageSection.style.height = '267px'; 
+            imageSection.style.height = '268px'; 
         }
 
         // Find the scrollable container in the clone
