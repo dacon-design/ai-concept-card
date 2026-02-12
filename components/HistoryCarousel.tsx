@@ -383,7 +383,7 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
                     className={`absolute rounded-3xl ${offset === 0 ? 'shadow-2xl' : 'shadow-xl'}`}
                     style={{ 
                         width: 'clamp(280px, 77vw, 340px)', // Dynamic width: min 280, max 340, responsive 77vw
-                        aspectRatio: '9/16', // Keep aspect ratio, so height increases with width
+                        aspectRatio: '9/14', // Keep aspect ratio, so height increases with width
                         transformStyle: "preserve-3d",
                         cursor: offset === 0 ? "grab" : "pointer",
                         overflow: isDeleting && offset === 0 ? "visible" : "hidden", // Allow debris to fly out
@@ -441,11 +441,11 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
       {/* Action Buttons (Fixed) - Hide when deleting the last item */}
       {!(isDeleting && history.length === 1 && currentIndex < history.length && history.length === prevHistoryLength.current) && (
         <>
-            <div className="absolute bottom-10 left-0 w-full flex items-center justify-center gap-3 z-[60] pointer-events-auto px-4 pb-4 translate-y-[14px]">
+            <div className="absolute bottom-10 left-0 w-full flex items-center justify-center gap-3 z-[110] pointer-events-auto px-4 pb-4 translate-y-[14px]">
                 <Button 
                     variant="outline" 
                     disabled={currentIndex === -1 || currentIndex === history.length} // Disable on fallbacks
-                    className="flex-1 max-w-[140px] gap-2 h-10 bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 shadow-none transition-all disabled:opacity-30 disabled:cursor-not-allowed z-[70] relative"
+                    className="flex-1 max-w-[140px] gap-2 h-10 bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 shadow-none transition-all disabled:opacity-30 disabled:cursor-not-allowed z-[110] relative"
                     onClick={handleDownload}
                 >
                     <Download className="h-4 w-4" />
@@ -455,7 +455,7 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
                 <Button 
                     variant="outline" 
                     disabled={currentIndex === -1 || currentIndex === history.length} // Disable on fallbacks
-                    className="flex-1 max-w-[140px] gap-2 h-10 bg-transparent border-zinc-300 dark:border-zinc-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-700 active:bg-red-100 dark:active:bg-red-900/40 shadow-none transition-all disabled:opacity-30 disabled:cursor-not-allowed z-[70] relative"
+                    className="flex-1 max-w-[140px] gap-2 h-10 bg-transparent border-zinc-300 dark:border-zinc-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-700 active:bg-red-100 dark:active:bg-red-900/40 shadow-none transition-all disabled:opacity-30 disabled:cursor-not-allowed z-[110] relative"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsDeleteDialogOpen(true);

@@ -112,7 +112,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Shared Backdrop Blur Layer */}
-      <div className="fixed top-0 left-0 right-0 h-[140px] z-30 bg-gradient-to-b from-white/90 via-white/70 to-transparent dark:from-black/90 dark:via-black/70 backdrop-blur-md pointer-events-none mask-image:linear-gradient(to_bottom,black_80%,transparent)" />
+      <div className="fixed top-0 left-0 right-0 h-[100px] z-30 bg-gradient-to-b from-white/90 via-white/70 to-transparent dark:from-black/90 dark:via-black/70 backdrop-blur-md pointer-events-none mask-image:linear-gradient(to_bottom,black_80%,transparent)" />
 
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-transparent">
