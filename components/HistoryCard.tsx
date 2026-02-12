@@ -9,9 +9,10 @@ interface HistoryCardProps {
   data: any;
   isFallback?: boolean;
   fallbackText?: string;
+  isActive?: boolean;
 }
 
-const HistoryCard = forwardRef<HTMLDivElement, HistoryCardProps>(({ data, isFallback = false, fallbackText }, ref) => {
+const HistoryCard = forwardRef<HTMLDivElement, HistoryCardProps>(({ data, isFallback = false, fallbackText, isActive = false }, ref) => {
 
   if (isFallback) {
     // 1. END OF HISTORY (Oldest) - "已是最后一张了！"
@@ -109,15 +110,15 @@ const HistoryCard = forwardRef<HTMLDivElement, HistoryCardProps>(({ data, isFall
             </div>
             
             {/* Text Section */}
-            <div className="flex-1 p-6 md:p-8 flex flex-col bg-white relative min-h-0">
+            <div className="flex-1 p-5 flex flex-col bg-white relative min-h-0">
                 <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none z-10"></div>
                 
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2 text-zinc-900 shrink-0">{data.title}</h1>
-                <p className="text-xs text-zinc-400 uppercase tracking-[0.2em] font-medium mb-6 shrink-0">{data.subtitle}</p>
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight mb-2 text-zinc-900 shrink-0">{data.title}</h1>
+                <p className="text-xs text-zinc-400 uppercase tracking-[0.2em] font-medium mb-4 shrink-0">{data.subtitle}</p>
                 
-                <div className="w-8 h-1 bg-zinc-900 mb-6 rounded-full shrink-0"></div>
+                <div className="w-8 h-1 bg-zinc-900 mb-4 rounded-full shrink-0"></div>
                 
-                <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent z-0">
+                <div className={`flex-1 ${isActive ? "overflow-y-auto" : "overflow-hidden pointer-events-none"} pr-0 scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent z-0`}>
                     <p className="text-sm leading-relaxed text-zinc-600 font-sans text-justify whitespace-pre-wrap">
                         {data.description}
                     </p>

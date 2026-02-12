@@ -52,6 +52,11 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ concept: prompt }),
       });
       const result = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(result.details || result.error || "Failed to generate");
+      }
+
       setData(result);
       setConcept("");
 
@@ -68,9 +73,9 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error("Failed to save history", e);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("生成失败，请检查网络或 API Key 设置。详情请查看控制台日志。");
+      alert(`生成失败: ${error.message || "请检查网络或 API Key 设置"}`);
     } finally {
       setIsLoading(false);
     }

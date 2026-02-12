@@ -31,8 +31,8 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-transparent backdrop-blur-[2px]">
-      <div className="w-full md:max-w-6xl flex items-center justify-between h-24 px-6 md:px-12">
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-transparent">
+      <div className="w-full md:max-w-6xl flex items-center justify-between pt-7 pb-2 px-6 md:px-12">
         <p className="text-zinc-800 dark:text-zinc-200 text-lg tracking-widest font-bold font-serif">
           Concept Generator
         </p>

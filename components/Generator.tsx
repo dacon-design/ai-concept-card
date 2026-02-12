@@ -9,7 +9,6 @@ import { useGeneration } from "@/context/GenerationContext";
 
 export default function Generator() {
   const {
-    concept, setConcept,
     lastConcept,
     isLoading,
     data,
@@ -27,7 +26,6 @@ export default function Generator() {
     return null; // Prevent hydration mismatch
   }
 
-  const handleGenerate = () => generateImage(concept);
   const handleRegenerate = () => generateImage(lastConcept);
 
   const handleDownload = async () => {
@@ -41,10 +39,10 @@ export default function Generator() {
         // The image section is the first child
         const imageSection = clone.children[0] as HTMLElement;
         if (imageSection) {
-            // Calculate 40% of the standard card height (375 * 16 / 9 = 666.66)
-            // 666.66 * 0.4 = 266.66px
+            // Calculate 40% of the standard card height (375 * 14 / 9 = 583.33)
+            // 583.33 * 0.4 = 233.33px
             imageSection.classList.remove('h-[40%]');
-            imageSection.style.height = '268px'; 
+            imageSection.style.height = '233px'; 
         }
 
         // Find the scrollable container in the clone
@@ -68,7 +66,7 @@ export default function Generator() {
         }
         
         // Remove aspect ratio constraint from the card clone itself
-        clone.classList.remove('aspect-[9/16]', 'max-w-[375px]');
+        clone.classList.remove('aspect-[9/14]', 'max-w-[375px]');
         clone.style.width = '375px'; // Keep fixed width
         clone.style.height = 'auto'; // Auto height
         clone.style.position = 'absolute';
@@ -104,25 +102,8 @@ export default function Generator() {
 
   return (
     <div className="flex flex-col gap-8 w-full items-center mt-[10px] md:mt-[10px]">
-      <div className="flex gap-2 w-full">
-        <div className="relative w-full group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
-            <Input
-            placeholder="输入一个概念 (例如: 黑天鹅)"
-            value={concept}
-            onChange={(e) => setConcept(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-            className="relative bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent transition-all text-base md:text-sm"
-            />
-        </div>
-        <Button onClick={handleGenerate} disabled={isLoading} variant="outline" className="bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 shadow-none transition-all">
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          生成
-        </Button>
-      </div>
-
       {!data && !isLoading && (
-        <div className="w-full mt-4 md:mt-16 flex flex-col items-center text-center space-y-8">
+        <div className="w-full mt-[76px] md:mt-[124px] flex flex-col items-center text-center space-y-8">
             <div className="relative group cursor-default animate-in fade-in slide-in-from-bottom-8 duration-1000">
                  {/* 1. 多彩背景光晕 - 增强色彩与层次 */}
                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/30 rounded-full blur-3xl mix-blend-screen animate-pulse"></div>
@@ -175,7 +156,7 @@ export default function Generator() {
 
       {isLoading && (
         <div className="flex flex-col items-center gap-4 w-full animate-in fade-in duration-500">
-           <div className="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full max-w-[375px] aspect-[9/16] flex flex-col relative border border-gray-100 dark:border-zinc-800">
+           <div className="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full max-w-[375px] aspect-[9/14] flex flex-col relative border border-gray-100 dark:border-zinc-800">
              {/* Shimmer Effect Overlay */}
              <div className="absolute inset-0 z-20 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite] skew-x-12 pointer-events-none"></div>
              
@@ -190,7 +171,7 @@ export default function Generator() {
              </div>
              
              {/* Text Skeleton */}
-             <div className="flex-1 p-6 md:p-8 space-y-6 bg-white dark:bg-zinc-900 relative">
+             <div className="flex-1 p-5 space-y-6 bg-white dark:bg-zinc-900 relative">
                 {/* Title */}
                 <div className="h-8 bg-zinc-100 dark:bg-zinc-800 rounded-md w-3/4 animate-pulse"></div>
                 
@@ -222,7 +203,7 @@ export default function Generator() {
       {data && (
         <div className="flex flex-col items-center gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Preview Area */}
-          <div ref={cardRef} className="bg-white text-black rounded-xl overflow-hidden shadow-2xl w-full max-w-[375px] aspect-[9/16] flex flex-col relative border border-gray-100">
+          <div ref={cardRef} className="bg-white text-black rounded-xl overflow-hidden shadow-2xl w-full max-w-[375px] aspect-[9/14] flex flex-col relative border border-gray-100">
              {/* Image Section */}
              <div className="h-[40%] w-full relative overflow-hidden bg-gray-100 shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -240,24 +221,19 @@ export default function Generator() {
              </div>
              
              {/* Text Section */}
-             <div className="flex-1 p-8 flex flex-col bg-white relative min-h-0">
+             <div className="flex-1 p-5 flex flex-col bg-white relative min-h-0">
                 <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none z-10"></div>
                 
-                <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 shrink-0">{data.title}</h1>
-                <p className="text-xs text-zinc-400 uppercase tracking-[0.2em] font-medium mb-6 shrink-0">{data.subtitle}</p>
+                <h1 className="text-2xl font-bold tracking-tight mb-2 text-zinc-900 shrink-0">{data.title}</h1>
+                <p className="text-xs text-zinc-400 uppercase tracking-[0.2em] font-medium mb-4 shrink-0">{data.subtitle}</p>
                 
-                <div className="w-8 h-1 bg-zinc-900 mb-6 rounded-full shrink-0"></div>
+                <div className="w-8 h-1 bg-zinc-900 mb-4 rounded-full shrink-0"></div>
                 
-                <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent z-0">
+                <div className="flex-1 overflow-y-auto pr-0 scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent z-0">
                     <p className="text-sm leading-relaxed text-zinc-600 font-sans text-justify whitespace-pre-wrap">
                         {data.description}
                     </p>
                 </div>
-             </div>
-             
-             {/* Footer */}
-             <div className="absolute bottom-4 right-6 text-[10px] text-zinc-300 font-mono tracking-widest">
-                AI CONCEPT
              </div>
           </div>
 

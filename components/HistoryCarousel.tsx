@@ -273,9 +273,14 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
         opacity = 0;
     }
 
+    // Add explicit translateZ to fix Android z-index jitter
+    // We use a small z offset to physically separate the cards in 3D space
+    const z = effectiveIsDeleting && isCurrent ? 100 : -Math.abs(offset) * 100;
+
     return {
         x,
         y, // Apply vertical offset
+        z, // Explicit Z-depth for Android
         scale: effectiveIsDeleting && offset === 1 ? 1 : scale, // Also scale up the incoming card
         zIndex,
         rotateY: effectiveIsDeleting && offset === 1 ? 0 : rotateY, // Reset rotation for incoming card
@@ -283,7 +288,7 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
         transition: { 
             type: "spring", 
             stiffness: 260, 
-            damping: 20,
+            damping: 20, 
             mass: 1,
             // If deleting, make the card disappear instantly so particles take over
             ...(effectiveIsDeleting && isCurrent ? { duration: 0.1 } : {}),
@@ -350,6 +355,7 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
                         else cardRefs.current.delete(index);
                     }}
                     data={item} 
+                    isActive={offset === 0}
                 />;
                 // Use ID if available, otherwise fallback to index (but we try to ensure IDs exist)
                 key = item?.id || `history-${index}`;
@@ -435,7 +441,7 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
       {/* Action Buttons (Fixed) - Hide when deleting the last item */}
       {!(isDeleting && history.length === 1 && currentIndex < history.length && history.length === prevHistoryLength.current) && (
         <>
-            <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-3 z-[60] pointer-events-auto px-4 pb-4 translate-y-[14px]">
+            <div className="absolute bottom-10 left-0 w-full flex items-center justify-center gap-3 z-[60] pointer-events-auto px-4 pb-4 translate-y-[14px]">
                 <Button 
                     variant="outline" 
                     disabled={currentIndex === -1 || currentIndex === history.length} // Disable on fallbacks
