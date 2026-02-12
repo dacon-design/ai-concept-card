@@ -438,8 +438,8 @@ export default function HistoryCarousel({ history, onDelete, onDeleteStart }: Hi
         cancelText="继续消化"
       />
 
-      {/* Action Buttons (Fixed) - Hide when deleting the last item */}
-      {!(isDeleting && history.length === 1 && currentIndex < history.length && history.length === prevHistoryLength.current) && (
+      {/* Action Buttons (Fixed) - Hide when deleting the last item OR when delete dialog is open */}
+      {!(isDeleting && history.length === 1 && currentIndex < history.length && history.length === prevHistoryLength.current) && !isDeleteDialogOpen && (
         <>
             <div className="absolute bottom-10 left-0 w-full flex items-center justify-center gap-3 z-[110] pointer-events-auto px-4 pb-4 translate-y-[14px]">
                 <Button 

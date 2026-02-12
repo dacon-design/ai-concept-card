@@ -4,7 +4,7 @@ import ConceptInput from "../components/ConceptInput";
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen flex-col items-center pt-44 px-4 pb-4 md:pt-52 md:px-24 md:pb-24 bg-white dark:bg-black overflow-hidden selection:bg-violet-200 dark:selection:bg-violet-900">
+    <main className="relative flex h-full w-full flex-col items-center pt-44 px-4 pb-4 md:pt-52 md:px-24 md:pb-24 bg-white dark:bg-black overflow-y-auto overflow-x-hidden selection:bg-violet-200 dark:selection:bg-violet-900 overscroll-behavior-y-contain">
       
       {/* 动态背景流体层 */}
       <div className="fixed inset-0 z-0 opacity-40 dark:opacity-30 pointer-events-none">

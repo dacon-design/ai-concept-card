@@ -102,7 +102,7 @@ export default function HistoryPage() {
   );
 
   return (
-    <main className="relative min-h-screen flex flex-col bg-white dark:bg-black overflow-hidden selection:bg-violet-200 dark:selection:bg-violet-900">
+    <main className="relative h-full flex flex-col bg-white dark:bg-black overflow-hidden selection:bg-violet-200 dark:selection:bg-violet-900">
       
       {/* 动态背景流体层 (复用首页样式) */}
       <div className="fixed inset-0 z-0 opacity-40 dark:opacity-30 pointer-events-none">
