@@ -105,14 +105,17 @@ export default function HistoryPage() {
     <main className="relative min-h-screen flex flex-col bg-white dark:bg-black overflow-hidden selection:bg-violet-200 dark:selection:bg-violet-900">
       
       {/* 动态背景流体层 (复用首页样式) */}
-      <div className="absolute inset-0 z-0 opacity-40 dark:opacity-30 pointer-events-none">
+      <div className="fixed inset-0 z-0 opacity-40 dark:opacity-30 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-r from-violet-200 to-pink-200 blur-[100px] animate-[blob_20s_infinite]"></div>
           <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-r from-blue-200 to-cyan-200 blur-[100px] animate-[blob_25s_infinite_reverse]"></div>
           <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-r from-fuchsia-200 to-purple-200 blur-[100px] animate-[blob_30s_infinite]"></div>
       </div>
 
+      {/* Shared Backdrop Blur Layer */}
+      <div className="fixed top-0 left-0 right-0 h-[140px] z-30 bg-gradient-to-b from-white/90 via-white/70 to-transparent dark:from-black/90 dark:via-black/70 backdrop-blur-md pointer-events-none mask-image:linear-gradient(to_bottom,black_80%,transparent)" />
+
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-transparent backdrop-blur-[2px]">
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-transparent">
         <div className="w-full md:max-w-6xl flex items-center justify-between h-24 px-6 md:px-12">
           <div className="flex items-center gap-2">
             <Link href="/">
