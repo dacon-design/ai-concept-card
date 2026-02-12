@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, RotateCcw } from "lucide-react";
 import html2canvas from "html2canvas";
+import { useGeneration } from "@/context/GenerationContext";
 
 export default function Generator() {
-  const [concept, setConcept] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const {
+    concept, setConcept,
+    lastConcept,
+    isLoading,
+    data,
+    generateImage
+  } = useGeneration();
+  
   const cardRef = useRef<HTMLDivElement>(null);
-
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -22,27 +27,8 @@ export default function Generator() {
     return null; // Prevent hydration mismatch
   }
 
-  const handleGenerate = async () => {
-    if (!concept) return;
-    setIsLoading(true);
-    setData(null);
-
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ concept }),
-      });
-      const result = await res.json();
-      setData(result);
-      setConcept(""); // Clear input after successful generation
-    } catch (error) {
-      console.error(error);
-      alert("生成失败，请检查网络或 API Key 设置。详情请查看控制台日志。");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleGenerate = () => generateImage(concept);
+  const handleRegenerate = () => generateImage(lastConcept);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -117,7 +103,7 @@ export default function Generator() {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full items-center">
+    <div className="flex flex-col gap-8 w-full items-center mt-[10px] md:mt-[10px]">
       <div className="flex gap-2 w-full">
         <div className="relative w-full group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
@@ -129,15 +115,15 @@ export default function Generator() {
             className="relative bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent transition-all text-base md:text-sm"
             />
         </div>
-        <Button onClick={handleGenerate} disabled={isLoading} variant="outline" className="bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 shadow-sm transition-all">
+        <Button onClick={handleGenerate} disabled={isLoading} variant="outline" className="bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 shadow-none transition-all">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           生成
         </Button>
       </div>
 
       {!data && !isLoading && (
-        <div className="w-full mt-4 md:mt-16 flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="relative group cursor-default">
+        <div className="w-full mt-4 md:mt-16 flex flex-col items-center text-center space-y-8">
+            <div className="relative group cursor-default animate-in fade-in slide-in-from-bottom-8 duration-1000">
                  {/* 1. 多彩背景光晕 - 增强色彩与层次 */}
                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/30 rounded-full blur-3xl mix-blend-screen animate-pulse"></div>
                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/30 rounded-full blur-3xl mix-blend-screen animate-pulse delay-700"></div>
@@ -174,7 +160,7 @@ export default function Generator() {
                  </div>
             </div>
 
-            <div className="max-w-lg space-y-4 px-4">
+            <div className="max-w-lg space-y-4 px-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 fill-mode-both">
                 <h2 className="text-2xl md:text-3xl font-serif tracking-wide text-gray-900 dark:text-gray-100 whitespace-nowrap">
                     将抽象概念 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 font-bold">具象化为艺术</span>
                 </h2>
@@ -183,16 +169,7 @@ export default function Generator() {
                 </p>
             </div>
 
-            <div className="fixed bottom-12 left-0 w-full flex flex-wrap justify-center gap-4 md:gap-8 text-[10px] md:text-xs font-medium text-gray-400 uppercase tracking-widest pointer-events-none">
-                <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                    <span>Deep Analysis</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                    <span>Visual Generation</span>
-                </div>
-            </div>
+            {/* Removed bottom text from here to move it to page.tsx for better positioning */}
         </div>
       )}
 
@@ -203,16 +180,17 @@ export default function Generator() {
              <div className="absolute inset-0 z-20 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite] skew-x-12 pointer-events-none"></div>
              
              {/* Image Skeleton */}
-             <div className="h-[40%] w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-zinc-300 dark:text-zinc-700">
-                    <svg className="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+             <div className="h-[40%] w-full bg-gradient-to-br from-violet-100 via-purple-100 to-cyan-100 dark:from-violet-900/50 dark:via-purple-900/50 dark:to-cyan-900/50 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite] skew-x-12 z-10"></div>
+                <div className="absolute inset-0 flex items-center justify-center text-violet-400/30 dark:text-violet-300/20">
+                    <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
              </div>
              
              {/* Text Skeleton */}
-             <div className="flex-1 p-6 md:p-8 space-y-6 bg-white dark:bg-zinc-900">
+             <div className="flex-1 p-6 md:p-8 space-y-6 bg-white dark:bg-zinc-900 relative">
                 {/* Title */}
                 <div className="h-8 bg-zinc-100 dark:bg-zinc-800 rounded-md w-3/4 animate-pulse"></div>
                 
@@ -231,11 +209,12 @@ export default function Generator() {
                     <div key="p4" className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-11/12 animate-pulse"></div>
                     <div key="p5" className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-3/4 animate-pulse"></div>
                 </div>
+
+                {/* Loading Text */}
+                <div className="absolute bottom-6 left-0 w-full text-center text-zinc-300 dark:text-zinc-600 text-xs animate-pulse font-mono tracking-widest uppercase">
+                    Generating...
+                </div>
              </div>
-           </div>
-           
-           <div className="text-zinc-400 text-sm animate-pulse font-mono tracking-widest uppercase">
-               Generating...
            </div>
         </div>
       )}
@@ -282,9 +261,14 @@ export default function Generator() {
              </div>
           </div>
 
-          <Button variant="outline" onClick={handleDownload} className="w-full max-w-[375px] shadow-sm bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all">
-            <Download className="mr-2 h-4 w-4" /> 下载卡片
-          </Button>
+          <div className="flex gap-4 w-full max-w-[375px]">
+            <Button variant="outline" onClick={handleDownload} className="flex-1 shadow-none bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 transition-colors">
+              <Download className="mr-2 h-4 w-4" /> 下载卡片
+            </Button>
+            <Button variant="outline" onClick={handleRegenerate} className="flex-1 shadow-none bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 transition-colors">
+              <RotateCcw className="mr-2 h-4 w-4" /> 重新生成
+            </Button>
+          </div>
         </div>
       )}
     </div>
