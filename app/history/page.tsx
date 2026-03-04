@@ -14,28 +14,30 @@ export default function HistoryPage() {
   const [isDeletingLast, setIsDeletingLast] = useState(false);
 
   useEffect(() => {
-    try {
-      const data = JSON.parse(localStorage.getItem("concept-history") || "[]");
-      
-      // Ensure all items have an ID (for legacy data)
-      let hasUpdates = false;
-      const sanitizedData = data.map((item: any) => {
-        if (!item.id) {
-           hasUpdates = true;
-           return { ...item, id: crypto.randomUUID() };
+    if (typeof window !== 'undefined') {
+      try {
+        const data = JSON.parse(localStorage.getItem("concept-history") || "[]");
+        
+        // Ensure all items have an ID (for legacy data)
+        let hasUpdates = false;
+        const sanitizedData = data.map((item: any) => {
+          if (!item.id) {
+             hasUpdates = true;
+             return { ...item, id: crypto.randomUUID() };
+          }
+          return item;
+        });
+
+        if (hasUpdates) {
+            localStorage.setItem("concept-history", JSON.stringify(sanitizedData));
         }
-        return item;
-      });
 
-      if (hasUpdates) {
-          localStorage.setItem("concept-history", JSON.stringify(sanitizedData));
+        setHistory(sanitizedData);
+      } catch (e) {
+        console.error("Failed to load history", e);
+      } finally {
+        setIsLoading(false);
       }
-
-      setHistory(sanitizedData);
-    } catch (e) {
-      console.error("Failed to load history", e);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { ZhipuAI } from "zhipuai-sdk-nodejs-v4";
 
 export async function POST(req: Request) {
   const { concept } = await req.json();
@@ -83,33 +84,32 @@ export async function POST(req: Request) {
         try {
             console.log("Generating image with Zhipu AI (CogView-3-Flash)...");
             
-            const zhipu = new OpenAI({
-                apiKey: process.env.ZHIPU_API_KEY,
-                baseURL: "https://open.bigmodel.cn/api/paas/v4/"
+            const zhipu = new ZhipuAI({
+                apiKey: process.env.ZHIPU_API_KEY
             });
 
-            const response = await zhipu.images.generate({
-                model: "cogview-3-flash",
+            const response = await zhipu.images.create({
+                model: "cogview-3",
                 prompt: imagePrompt,
             });
             
-            if (response.data?.[0]?.url) {
-                console.log("Zhipu image generation successful");
-                const tempUrl = response.data[0].url;
+            if (response.data?.[0]) {
+                console.log("Zhipu image generation successful. Raw data:", JSON.stringify(response.data));
+                const firstItem = response.data[0];
+                const tempUrl = typeof firstItem === 'string' ? firstItem : (firstItem as any).url;
+
+                if (!tempUrl) {
+                    throw new Error("Image URL not found in Zhipu response");
+                }
 
                 // Proxy the image
-                try {
-                    console.log("Fetching image to convert to base64...");
-                    const imgRes = await fetch(tempUrl);
-                    if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
-                    const imgBuffer = await imgRes.arrayBuffer();
-                    const base64Image = Buffer.from(imgBuffer).toString('base64');
-                    finalImageUrl = `data:image/png;base64,${base64Image}`;
-                    console.log("Image converted to base64 successfully");
-                } catch (fetchErr) {
-                    console.error("Failed to proxy image:", fetchErr);
-                    finalImageUrl = tempUrl;
-                }
+                console.log("Fetching image to convert to base64...");
+                const imgRes = await fetch(tempUrl);
+                if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
+                const imgBuffer = await imgRes.arrayBuffer();
+                const base64Image = Buffer.from(imgBuffer).toString('base64');
+                finalImageUrl = `data:image/png;base64,${base64Image}`;
+                console.log("Image converted to base64 successfully");
             } else {
                 console.error("Zhipu image generation failed:", JSON.stringify(response));
             }
