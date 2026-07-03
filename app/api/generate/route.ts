@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { ZhipuAI } from "zhipuai-sdk-nodejs-v4";
+
 
 export async function POST(req: Request) {
   const { concept } = await req.json();
@@ -82,39 +82,24 @@ export async function POST(req: Request) {
         let finalImageUrl = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3"; // Fallback
 
         try {
-            console.log("Generating image with Zhipu AI (CogView-3-Flash)...");
+            console.log("Generating image with OpenAI DALL-E 3...");
             
-            const zhipu = new ZhipuAI({
-                apiKey: process.env.ZHIPU_API_KEY
-            });
-
-            const response = await zhipu.images.create({
-                model: "cogview-3",
+            const response = await openai.images.generate({
+                model: "dall-e-3",
                 prompt: imagePrompt,
+                n: 1,
+                size: "1024x1792", // Aspect ratio for cards
+                response_format: "b64_json",
             });
             
-            if (response.data?.[0]) {
-                console.log("Zhipu image generation successful. Raw data:", JSON.stringify(response.data));
-                const firstItem = response.data[0];
-                const tempUrl = typeof firstItem === 'string' ? firstItem : (firstItem as any).url;
-
-                if (!tempUrl) {
-                    throw new Error("Image URL not found in Zhipu response");
-                }
-
-                // Proxy the image
-                console.log("Fetching image to convert to base64...");
-                const imgRes = await fetch(tempUrl);
-                if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.statusText}`);
-                const imgBuffer = await imgRes.arrayBuffer();
-                const base64Image = Buffer.from(imgBuffer).toString('base64');
-                finalImageUrl = `data:image/png;base64,${base64Image}`;
-                console.log("Image converted to base64 successfully");
+            if (response.data?.[0]?.b64_json) {
+                console.log("DALL-E 3 image generation successful.");
+                finalImageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
             } else {
-                console.error("Zhipu image generation failed:", JSON.stringify(response));
+                 throw new Error("Image data not found in DALL-E response");
             }
         } catch (imgError: any) {
-            console.error("Image generation failed:", imgError.message);
+            console.error("DALL-E 3 image generation failed:", imgError);
         }
         return finalImageUrl;
     });
