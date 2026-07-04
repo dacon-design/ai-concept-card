@@ -28,7 +28,7 @@ export default function ConceptInput() {
         </div>
         <Button onClick={handleGenerate} disabled={isLoading} variant="outline" className="bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-700 shadow-none transition-all">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          生成
+          输出
         </Button>
     </div>
   );
